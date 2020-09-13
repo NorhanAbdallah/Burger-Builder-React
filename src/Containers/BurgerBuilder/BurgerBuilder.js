@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import Aux from '../../hoc/Aux'
 import Burger from '../../Components/Burger/Burger'
 import BuildControls from '../../Components/Burger/BuildControls/BuildControls'
+import Modal from '../../Components/UI/Modal/Modal'
+import OrderSummary from '../../Components/Burger/OrderSummary/OrderSummary'
 
 const INGREDIANTS_PRICE = {
     salad: .4,
@@ -18,7 +20,22 @@ class BurgerBuilder extends Component {
             cheese: 0,
             meat: 0
         },
-        totalPrice: 4
+        totalPrice: 4,
+        Purchasable: false,
+        Purchasing: false
+    }
+
+
+    updatePurchaseState = (ingredients) => {
+        const ing = { ...ingredients };
+
+        const sum = Object.values(ing).reduce((sum, elm) => {
+            return sum + elm;
+        }, 0)
+
+        this.setState({
+            Purchasable: sum > 0
+        })
     }
 
     addIngrediants = (type) => {
@@ -33,10 +50,11 @@ class BurgerBuilder extends Component {
             ingredients: newIngrediants,
             totalPrice: newPrice
         })
+        this.updatePurchaseState(newIngrediants);
     }
 
     removeIngredients = (type) => {
-        if (this.state.ingredients[type] != 0 && this.state.totalPrice > 4) {
+        if (this.state.ingredients[type] !== 0 && this.state.totalPrice > 4) {
             const updatedIngredients = this.state.ingredients[type] - 1;
             const newIngrediants = { ...this.state.ingredients }
             newIngrediants[type] = updatedIngredients;
@@ -46,7 +64,20 @@ class BurgerBuilder extends Component {
                 ingredients: newIngrediants,
                 totalPrice: newPrice
             })
+            this.updatePurchaseState(newIngrediants);
         }
+    }
+
+    purchasingHandler = () => {
+        this.setState({
+            Purchasing: true
+        })
+    }
+
+    closeModalHandler = () => {
+        this.setState({
+            Purchasing: false
+        })
     }
 
     render() {
@@ -58,12 +89,19 @@ class BurgerBuilder extends Component {
 
         return (
             <Aux>
+                <Modal show={this.state.Purchasing} close={this.closeModalHandler}>
+                    <OrderSummary ingredients={this.state.ingredients} />
+                </Modal>
+
                 <Burger ingredients={this.state.ingredients} />
+
                 <BuildControls
                     addIngrediants={this.addIngrediants}
                     removeIngredients={this.removeIngredients}
                     disabled={disabledInfo}
-                    price={this.state.totalPrice} />
+                    price={this.state.totalPrice}
+                    Purchasable={this.state.Purchasable}
+                    purchasingHandler={this.purchasingHandler} />
             </Aux>
         );
     }
